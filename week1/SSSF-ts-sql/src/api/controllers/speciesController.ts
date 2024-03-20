@@ -4,7 +4,7 @@ import {Species} from '../../types/DBTypes';
 
 const speciesListGet = async (
   req: Request,
-  res: Response<Species[]>,
+  res: Response,
   next: NextFunction
 ) => {
   try {

@@ -1,15 +1,30 @@
 import promisePool from '../../database/db';
-import {Species} from '../../types/DBTypes';
+import {Category, Species} from '../../types/DBTypes';
 import {RowDataPacket} from 'mysql2';
 
-const getAllSpecies = async (): Promise<Species[]> => {
+type SpeciesRes = Omit<Species, 'category'> & {category: Category};
+
+const getAllSpecies = async (): Promise<SpeciesRes[]> => {
   const [rows] = await promisePool.execute<RowDataPacket[] & Species[]>(
-    'SELECT * FROM species'
+    `
+    SELECT species_id, species_name, image,
+    JSON_OBJECT('category_id', categories.category_id, 'category_name', categories.category_name) AS category
+    FROM species
+    JOIN categories ON species.category = categories.category_id
+    `
   );
   if (!rows) {
     throw new Error('No species found');
   }
-  return rows as Species[];
+
+  const species = rows.map((row) => {
+    return {
+      ...row,
+      category: JSON.parse(row.category),
+    };
+  });
+
+  return species as SpeciesRes[];
 };
 
 const getSpeciesById = async (id: number): Promise<Species> => {
