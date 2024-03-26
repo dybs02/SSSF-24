@@ -25,15 +25,26 @@ const getAllCats = async (): Promise<Cat[]> => {
   return cats;
 };
 
-// TODO: create getCat function to get single cat
+const getCat = async (id: number): Promise<Cat> => {
+  const [rows] = await promisePool.execute<RowDataPacket[]>(
+    `
+    SELECT * FROM sssf_cat
+    WHERE cat_id = ?
+    `,
+    [id],
+  );
+  
+  if (!rows) {
+    throw new CustomError('Cat not found', 404);
+  }
+  return rows[0] as Cat;
+};
 
-// TODO: use Utility type to modify Cat type for 'data'.
-// Note that owner is not User in this case. It's just a number (user_id)
-const addCat = async (data): Promise<MessageResponse> => {
+const addCat = async (data: Omit<Cat, 'owner'> & {owner: number}): Promise<number> => {
   const [headers] = await promisePool.execute<ResultSetHeader>(
     `
     INSERT INTO sssf_cat (cat_name, weight, owner, filename, birthdate, coords) 
-    VALUES (?, ?, ?, ?, ?, POINT(?, ?))
+    VALUES (?, ?, ?, ?, ?, POINT(?, ?));
     `,
     [
       data.cat_name,
@@ -48,13 +59,28 @@ const addCat = async (data): Promise<MessageResponse> => {
   if (headers.affectedRows === 0) {
     throw new CustomError('No cats added', 400);
   }
-  return {message: 'Cat added'};
+  const [rows] = await promisePool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID();');
+  return rows[0]['LAST_INSERT_ID()'];
 };
 
-// TODO: create updateCat function to update single cat
-// if role is admin, update any cat
-// if role is user, update only cats owned by user
-// You can use updateUser function from userModel as a reference for SQL
+const updateCat = async (cat: Cat, id: number, user_id: number, user_role: string): Promise<MessageResponse> => {
+  let query = 'UPDATE sssf_cat SET ? WHERE cat_id = ?'
+  if (user_role === 'user') {
+    query += ` AND owner = ?`;
+  }
+  console.log('updateCat', query);
+  const sql = promisePool.format(query, [
+    cat,
+    id,
+    user_id,
+  ]);
+  const [headers] = await promisePool.execute<ResultSetHeader>(sql);
+
+  if (headers.affectedRows === 0) {
+    throw new CustomError('No cats updated', 400);
+  }
+  return {message: 'Cat updated'};
+};
 
 const deleteCat = async (catId: number): Promise<MessageResponse> => {
   const [headers] = await promisePool.execute<ResultSetHeader>(

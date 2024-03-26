@@ -17,7 +17,12 @@ const router = express.Router();
 router
   .route('/')
   .get(userListGet)
-  .post(userPost)
+  .post(
+    body('user_name').notEmpty().isString().isLength({min: 3, max: 30}),
+    body('email').notEmpty().isEmail().normalizeEmail(),
+    body('password').notEmpty().isString().isLength({min: 5, max: 30}),
+    userPost
+  )
   .put(passport.authenticate('jwt', {session: false}), userPutCurrent)
   .delete(passport.authenticate('jwt', {session: false}), userDeleteCurrent);
 
