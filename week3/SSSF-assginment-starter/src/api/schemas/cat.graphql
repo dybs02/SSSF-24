@@ -1,7 +1,54 @@
-# TODO: create graphql schema for cat. Example type definitions:
-# Cat: id, cat_name, weight, birthdate, owner, location, filename
-# Location: type, coordinates
-# Coordinates: lat, lng
-# LocationInput: type, coordinates
-# Query: catById, cats, catsByArea, catsByOwner
-# Mutation: createCat, updateCat, deleteCat
+scalar DateTime
+  @specifiedBy(url: "https://scalars.graphql.org/andimarek/date-time")
+
+type Cat {
+  id: ID
+  cat_name: String
+  weight: Float
+  birthdate: DateTime
+  owner: Owner
+  location: Location
+  filename: String
+}
+
+type Owner {
+  id: ID
+  user_name: String
+  email: String
+}
+
+type Location {
+  type: GeoJSONPointType
+  coordinates: [Float]
+}
+
+enum GeoJSONPointType {
+  Point
+}
+
+input LocationInput {
+  type: GeoJSONPointType!
+  """
+  Coordinates must be in the format [longitude, latitude]
+  """
+  coordinates: [Float]!
+} 
+
+input Coordinates {
+  lat: Float
+  lng: Float
+}
+
+type Query {
+  catById(id: ID!): Cat
+  cats: [Cat]
+  catsByArea(topRight: Coordinates!, bottomLeft: Coordinates!): [Cat]
+  catsByOwner(ownerId: ID!): [Cat]
+}
+
+type Mutation {
+  createCat(cat_name: String!, weight: Float!, birthdate: DateTime!, owner: ID!, location: LocationInput!, filename: String!): Cat
+  updateCat(id: ID!, cat_name: String, weight: Float, birthdate: DateTime): Cat
+  deleteCat(id: ID!): Cat
+}
+
