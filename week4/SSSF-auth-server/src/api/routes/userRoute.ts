@@ -16,13 +16,14 @@ router
   .route('/')
   .get(userListGet)
   .post(userPost)
-  .put(authenticate, userPut)
-  .delete(authenticate, userDelete);
+  .put(authenticate, userPut);
 
 // router.get('/token', authenticate, checkToken);
 
 // router.route('/check').get(check);
 
-router.route('/:id').get(userGet);
+router.route('/:id')
+  .get(userGet)
+  .delete(authenticate, userDelete);
 
 export default router;
