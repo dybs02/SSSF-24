@@ -46,7 +46,7 @@ const userGet = async (
 
 const userPost = async (
   req: Request<{}, {}, Omit<User, 'user_id'>>,
-  res: Response<MessageResponse & {data: User}>,
+  res: Response<MessageResponse & {user: User}>,
   next: NextFunction
 ) => {
   try {
@@ -55,7 +55,7 @@ const userPost = async (
     const user = await userModel.create(req.body);
     const response = {
       message: 'User added',
-      data: user,
+      user: user,
     };
     res.json(response);
   } catch (error) {
@@ -64,13 +64,13 @@ const userPost = async (
 };
 
 const userPut = async (
-  req: Request<{id: string}, {}, Omit<User, 'user_id'>>,
-  res: Response<MessageResponse & {data: User}>,
+  req: Request<{}, {}, Omit<User, 'user_id'>>,
+  res: Response<MessageResponse & {user: User}>,
   next: NextFunction
 ) => {
   try {
     const user = await userModel
-      .findByIdAndUpdate(req.params.id, req.body, {
+      .findByIdAndUpdate(res.locals.user._id, req.body, {
         new: true,
       })
       .select('-password -__v -role');
@@ -79,7 +79,7 @@ const userPut = async (
     }
     const response = {
       message: 'User updated',
-      data: user,
+      user: user,
     };
     res.json(response);
   } catch (error) {
@@ -89,7 +89,7 @@ const userPut = async (
 
 const userDelete = async (
   req: Request<{id: string}, {}, {}>,
-  res: Response<MessageResponse>,
+  res: Response<MessageResponse & {user: User}>,
   next: NextFunction
 ) => {
   try {
@@ -99,7 +99,7 @@ const userDelete = async (
     if (!user) {
       throw new CustomError('No user found', 404);
     }
-    res.json({message: 'User deleted'});
+    res.json({message: 'User deleted', user: user});
   } catch (error) {
     next(error);
   }
